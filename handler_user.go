@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mkappworks/rss-aggregator-gobackend/internal/auth"
 	"github.com/mkappworks/rss-aggregator-gobackend/internal/database"
 )
 
@@ -32,6 +33,22 @@ func (apiCfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Error creating user %v", err))
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, databaseUsertoUser(user))
+}
+
+func (apiConfig *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
+	apiKey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusForbidden, fmt.Sprintf("Auth error %v", err))
+		return
+	}
+
+	user, err := apiConfig.DB.GetUserByAPIKey(r.Context(), apiKey)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Error getting user %v", err))
 		return
 	}
 
